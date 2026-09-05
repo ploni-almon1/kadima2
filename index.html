@@ -30,7 +30,7 @@
   <!-- VEŘEJNÁ ČÁST -->
   <div id="public-view" class="hidden">
     
-    <!-- NOVÁ ÚVODNÍ OBRAZOVKA PODLE NÁVRHU -->
+    <!-- ÚVODNÍ OBRAZOVKA (ONBOARDING) -->
     <div id="onboarding-screen" class="onboarding-container">
       <div class="onboarding-content">
         <div class="onboarding-logo">
@@ -48,38 +48,90 @@
         <div class="onboarding-dots">
           <div class="dot active"></div><div class="dot"></div><div class="dot"></div>
         </div>
-        <button class="btn-start" onclick="showAuthForm()">Začít</button>
-        <p class="login-link">Už máte účet? <span onclick="showAuthForm()">Přihlásit se</span></p>
+        <button class="btn-start" onclick="showRegisterScreen()">Začít</button>
+        <p class="login-link">Už máte účet? <span onclick="showLoginScreen()">Přihlásit se</span></p>
       </div>
     </div>
 
-    <!-- PŮVODNÍ PŘIHLAŠOVACÍ FORMULÁŘ -->
-    <div id="auth-screen" class="hidden" style="max-width: 400px; margin: 0 auto; padding: 20px;">
-      <div style="display:flex; align-items:center; margin-top: 40px; margin-bottom: 20px; cursor: pointer; color: var(--text-gray);" onclick="hideAuthForm()">
-          <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" style="margin-right: 8px;"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg> Zpět
+    <!-- OBRAZOVKA: PŘIHLÁŠENÍ -->
+    <div id="login-screen" class="hidden auth-wrapper">
+      <div class="auth-header" onclick="showOnboardingScreen()">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" style="margin-right: 8px;"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
       </div>
-      <h2 style="font-weight: 800; font-size: 1.8em; margin-bottom: 20px; color: var(--text-dark);">Vítejte zpět</h2>
-      <div class="auth-form" style="margin-top:0;">
-        <input type="email" id="email-input" class="auth-input" placeholder="Tvůj e-mail">
-        
-        <div style="position: relative; margin-bottom: 12px;">
-          <input type="password" id="password-input" class="auth-input" placeholder="Heslo (min. 6 znaků)" style="margin-bottom:0; padding-right:45px;">
-          <div onclick="togglePassword('password-input')" style="position: absolute; right: 15px; top: 15px; cursor: pointer; color: var(--text-gray);">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
-          </div>
+      <h2 class="auth-title">Přihlášení</h2>
+      <p class="auth-subtitle">Vítejte zpět! Přihlaste se do svého účtu.</p>
+      
+      <div class="input-group">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+        <input type="email" id="login-email" placeholder="E-mail">
+      </div>
+      
+      <div class="input-group">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+        <input type="password" id="login-password" placeholder="Heslo">
+        <div onclick="togglePassword('login-password')" style="cursor:pointer; display:flex; align-items:center;">
+            <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
         </div>
+      </div>
 
-        <a href="#" style="display:block; text-align:right; font-size:0.85em; font-weight:600; color:var(--primary-dark); margin-bottom:15px; text-decoration:none;" onclick="resetPassword(event)">Zapomněl(a) jsi heslo?</a>
+      <a href="#" style="display:block; text-align:right; font-size:0.85em; font-weight:600; color:#5A52E5; margin-bottom:25px; text-decoration:none;" onclick="resetPassword(event, 'login-email')">Zapomenuté heslo?</a>
 
-        <button onclick="loginUser()" class="btn-login" style="background:#5A52E5;">Přihlásit se</button>
-        <button onclick="registerUser()" class="btn-register" style="background:var(--primary-dark);">Vytvořit nový účet</button>
-        <div style="display:flex; align-items:center; color:var(--text-gray); font-size:0.85em; margin-bottom:15px;">
-            <div style="flex:1; height:1px; background:var(--gray-border);"></div><span style="padding:0 10px;">nebo</span><div style="flex:1; height:1px; background:var(--gray-border);"></div>
+      <button onclick="loginUser()" class="btn-primary">Přihlásit se</button>
+      <div class="divider">nebo</div>
+      <button onclick="loginWithGoogle()" class="btn-outline">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google logo"> Přihlásit se s Googlem
+      </button>
+      <p id="login-error" class="auth-error-msg"></p>
+      
+      <div style="text-align:center; margin-top:30px; font-size:0.9em; color:var(--text-gray);">
+          Ještě nemáte účet? <span style="color:#5A52E5; font-weight:700; cursor:pointer;" onclick="showRegisterScreen()">Zaregistrovat se</span>
+      </div>
+    </div>
+
+    <!-- OBRAZOVKA: REGISTRACE -->
+    <div id="register-screen" class="hidden auth-wrapper">
+      <div class="auth-header" onclick="showOnboardingScreen()">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" style="margin-right: 8px;"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+      </div>
+      <h2 class="auth-title">Vytvoření účtu</h2>
+      <p class="auth-subtitle">Vyplňte své údaje pro vytvoření nového účtu.</p>
+      
+      <div class="input-group">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+        <input type="email" id="reg-email" placeholder="E-mail">
+      </div>
+      
+      <div class="input-group">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+        <input type="password" id="reg-password" placeholder="Heslo" oninput="validatePassword()">
+        <div onclick="togglePassword('reg-password')" style="cursor:pointer; display:flex; align-items:center;">
+            <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
         </div>
-        <button onclick="loginWithGoogle()" class="btn-google">
-          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google logo" style="width:20px;height:20px;"> Přihlásit se přes Google
-        </button>
-        <p id="auth-error" style="color:#EF4444; font-size:0.85em; font-weight:600; text-align:center; margin-top:15px; display:none;"></p>
+      </div>
+
+      <div class="input-group" style="margin-bottom: 20px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+        <input type="password" id="reg-password-confirm" placeholder="Potvrďte heslo">
+        <div onclick="togglePassword('reg-password-confirm')" style="cursor:pointer; display:flex; align-items:center;">
+            <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+        </div>
+      </div>
+
+      <div class="pass-rules">
+          <div class="pass-rule" id="rule-len"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg> Heslo musí mít alespoň 8 znaků</div>
+          <div class="pass-rule" id="rule-num"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg> Obsahuje alespoň jedno číslo</div>
+          <div class="pass-rule" id="rule-upper"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg> Obsahuje alespoň jedno velké písmeno</div>
+      </div>
+
+      <button onclick="registerUser()" class="btn-primary" style="margin-top:10px;">Vytvořit účet</button>
+      <div class="divider">nebo</div>
+      <button onclick="loginWithGoogle()" class="btn-outline">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google logo"> Pokračovat s Googlem
+      </button>
+      <p id="reg-error" class="auth-error-msg"></p>
+
+      <div style="text-align:center; margin-top:30px; font-size:0.9em; color:var(--text-gray);">
+          Už máte účet? <span style="color:#5A52E5; font-weight:700; cursor:pointer;" onclick="showLoginScreen()">Přihlásit se</span>
       </div>
     </div>
   </div>
@@ -163,7 +215,6 @@
       <div class="section-title" style="margin: 30px 20px 10px 20px;">Další komunitní akce</div>
       <div id="stats-other-challenges" style="display:flex; flex-direction:column;"></div>
       
-      <!-- AKCE MÝCH SLEDUJÍCÍCH -->
       <div id="profile-followers-challenges-wrapper" style="display:none;">
           <div class="section-title" style="margin: 20px 20px 10px 20px;">Akce mých sledujících</div>
           <div style="padding: 0 20px;">
@@ -252,18 +303,15 @@
   <!-- STRAVA-STYLE DETAIL VÝZVY S PLYNULÝM SCROLLOVÁNÍM -->
   <div id="chal-detail-fullscreen" class="chal-detail-fullscreen">
 
-      <!-- Fixní obrázek a tlačítko na pozadí -->
       <div id="chal-detail-bg" class="chal-detail-bg-image"></div>
       <button class="chal-detail-close-btn" onclick="closeChallengeDetail()">
           <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z"/></svg>
       </button>
       
-      <!-- Tlačítko pro sdílení akce -->
       <button class="chal-detail-share-btn" onclick="shareChallenge()">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg>
       </button>
 
-      <!-- NOVÉ: Tlačítko pro úpravu akce (jen pro tvůrce) -->
       <button id="chal-detail-edit-btn" class="chal-detail-edit-btn" style="display: none;">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
       </button>
@@ -274,7 +322,6 @@
 
               <div style="display:flex; gap: 20px; margin-bottom: 20px; align-items: stretch;">
                   <div id="chal-detail-badge" style="width: 80px; height: 80px; border-radius: 16px; overflow: hidden; flex-shrink: 0; box-shadow: 0 4px 10px rgba(0,0,0,0.1); display: none;">
-                       <!-- Obrázek odznaku se doplní z JS -->
                   </div>
                   <div style="flex: 1; display: flex; flex-direction: column; justify-content: center;">
                       <div id="chal-detail-type-badge" style="font-size: 0.8em; font-weight:700; color:#4F46E5; text-transform:uppercase; margin-bottom: 5px;">Typ akce</div>
@@ -282,10 +329,8 @@
                   </div>
               </div>
 
-              <!-- MOTIVAČNÍ PODTITUL -->
               <div id="chal-detail-subtitle" style="font-size: 1em; color: var(--text-gray); margin-bottom: 30px; line-height: 1.5;"></div>
 
-              <!-- NOVÉ: Sekce pouze pro účastníky -->
               <div id="chal-participant-section" style="display: none; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid var(--gray-border);">
                   <div id="chal-participant-progress"></div>
                   <div id="chal-participant-leaderboard"></div>
@@ -327,7 +372,6 @@
 
               <div id="chal-detail-explanation" style="background: var(--gray-light); padding: 15px; border-radius: 16px; margin-top: 30px; margin-bottom: 20px; font-size: 0.9em; color: var(--text-dark); line-height: 1.5;"></div>
               
-              <!-- Kontejner pro odkaz na mapu -->
               <div id="chal-detail-map-link-container" style="margin-top: 10px; margin-bottom: 20px;"></div>
           </div>
       </div>
