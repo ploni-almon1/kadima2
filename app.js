@@ -1741,4 +1741,257 @@ window.openEditChallengeModal = async (id) => {
             c.classList.remove('active'); 
             if(c.getAttribute('data-val') === storedMarker) c.classList.add('active'); 
         });
-        const svgInput = document.getElementById('edit-chal-custom-svgJsem jazykový model a tohle přesahuje rámec, pro který jsem byl vytvořen.
+               const svgInput = document.getElementById('edit-chal-custom-svg');
+        if (svgInput) svgInput.value = data.customMarkerSvg || '';
+
+        document.getElementById('edit-chal-v-img').value = data.virtualMapUrl || '';
+        document.getElementById('edit-chal-v-w').value = data.virtualMapWidth || 3200;
+        document.getElementById('edit-chal-v-h').value = data.virtualMapHeight || 2400;
+        document.getElementById('edit-chal-v-svg').value = data.virtualSvgPath || '';
+
+        document.getElementById('edit-chal-v-width').value = data.virtualLineWidth || 10;
+        let vStyle = data.virtualLineStyle || 'solid';
+        document.querySelectorAll('#edit-chal-v-style .chip').forEach(c => {
+            c.classList.remove('active');
+            if(c.getAttribute('data-val') === vStyle) c.classList.add('active');
+        });
+        let vColor = data.virtualLineColor || '#4F46E5';
+        document.querySelectorAll('#edit-chal-v-color .color-chip').forEach(c => {
+            c.classList.remove('active');
+            if(c.getAttribute('data-val') === '#ffffff') c.style.borderColor = '#ccc';
+            else c.style.borderColor = 'transparent';
+            if(c.getAttribute('data-val') === vColor) {
+                c.classList.add('active');
+                c.style.borderColor = 'var(--text-dark)';
+            }
+        });
+
+        document.getElementById('edit-chal-desc').value = data.description || '';
+        document.getElementById('edit-chal-rules').value = data.rules || '';
+        document.getElementById('edit-chal-author-type').value = data.authorDisplay || 'user';
+
+        currentEditChalBgUrl = data.bgUrl || "";
+        document.getElementById('edit-chal-file-input').value = "";
+        document.getElementById('edit-chal-cropper-wrapper').style.display = "none";
+        if(chalCropper) { chalCropper.destroy(); chalCropper = null; }
+        
+        currentEditChalBadgeUrl = data.badgeUrl || "";
+        document.getElementById('edit-chal-badge-input').value = "";
+        document.getElementById('edit-chal-badge-cropper-wrapper').style.display = "none";
+        if(chalBadgeCropper) { chalBadgeCropper.destroy(); chalBadgeCropper = null; }
+
+        document.querySelectorAll('#edit-chal-chips .chip').forEach(c => { if(data.allowedActivities && data.allowedActivities.includes(c.getAttribute('data-type'))) { c.classList.add('active'); } else { c.classList.remove('active'); } });
+
+        let storedType = data.challengeType || 'collab'; document.querySelectorAll('#edit-chal-type .chip').forEach(c => { c.classList.remove('active'); if(c.getAttribute('data-val') === storedType) { c.classList.add('active'); window.updateTypeInfo(c, 'edit'); } });
+        let storedDay = data.startDay !== undefined ? data.startDay : 1; document.querySelectorAll('#edit-chal-start-day .chip').forEach(c => { c.classList.remove('active'); if(parseInt(c.getAttribute('data-val')) === storedDay) c.classList.add('active'); });
+        
+        document.getElementById('edit-chal-gpx-hint').innerText = '';
+        document.getElementById('edit-challenge-modal').classList.add('active');
+    }
+};
+
+window.closeEditChallengeModal = () => { 
+    window.handleUIClose('edit-challenge-modal'); 
+    selectedChallengeId = null; 
+    if(chalCropper) { chalCropper.destroy(); chalCropper = null; }
+    if(chalBadgeCropper) { chalBadgeCropper.destroy(); chalBadgeCropper = null; }
+    document.getElementById('edit-chal-cropper-wrapper').style.display = 'none';
+    document.getElementById('edit-chal-file-input').value = '';
+    document.getElementById('edit-chal-badge-cropper-wrapper').style.display = 'none';
+    document.getElementById('edit-chal-badge-input').value = '';
+    document.getElementById('edit-chal-subtitle').value = '';
+    document.getElementById('edit-chal-gpx-hint').innerText = '';
+};
+
+window.saveEditedChallenge = async () => {
+    if(isSaving) return;
+    const name = document.getElementById('edit-chal-name').value.trim(); const targetKm = parseFloat(document.getElementById('edit-chal-km').value);
+    const challengeType = document.querySelector('#edit-chal-type .chip.active').getAttribute('data-val');
+
+    const customMarkerType = document.querySelector('#edit-chal-marker-type .chip.active').getAttribute('data-val');
+    const customMarkerSvgInput = document.getElementById('edit-chal-custom-svg');
+    const customMarkerSvg = customMarkerSvgInput ? customMarkerSvgInput.value.trim() : "";
+
+    const mapType = document.querySelector('#edit-chal-map-type .chip.active').getAttribute('data-val');
+    const mapUrl = document.getElementById('edit-chal-map').value.trim();
+    const vImg = document.getElementById('edit-chal-v-img').value.trim();
+    const vW = parseFloat(document.getElementById('edit-chal-v-w').value) || 3200;
+    const vH = parseFloat(document.getElementById('edit-chal-v-h').value) || 2400;
+    const vSvg = document.getElementById('edit-chal-v-svg').value.trim();
+
+    const vLineWidth = parseFloat(document.getElementById('edit-chal-v-width').value) || 10;
+    const vLineStyle = document.querySelector('#edit-chal-v-style .chip.active').getAttribute('data-val');
+    const vLineColor = document.querySelector('#edit-chal-v-color .color-chip.active').getAttribute('data-val');
+
+    let finalBgUrl = currentEditChalBgUrl;
+    if(chalCropper) { finalBgUrl = chalCropper.getCroppedCanvas({ width: 800, height: 450 }).toDataURL('image/jpeg', 0.7); }
+    
+    let finalBadgeUrl = currentEditChalBadgeUrl;
+    if(chalBadgeCropper) { finalBadgeUrl = chalBadgeCropper.getCroppedCanvas({ width: 300, height: 300 }).toDataURL('image/jpeg', 0.8); }
+
+    const desc = document.getElementById('edit-chal-desc').value.trim();
+    const rules = document.getElementById('edit-chal-rules').value.trim();
+    const subtitle = document.getElementById('edit-chal-subtitle').value.trim();
+    const authorDisplay = document.getElementById('edit-chal-author-type').value;
+    const visibility = isUserAdmin ? document.getElementById('edit-chal-visibility').value : 'private';
+
+    const start = document.getElementById('edit-chal-start').value; const end = document.getElementById('edit-chal-end').value; const startDay = parseInt(document.querySelector('#edit-chal-start-day .chip.active').getAttribute('data-val'));
+    const allowedActivities = []; document.querySelectorAll('#edit-chal-chips .chip.active').forEach(c => { allowedActivities.push(c.getAttribute('data-type')); });
+    if(!name || !targetKm || !start || !end || allowedActivities.length === 0) return;
+
+    if(selectedChallengeId) { 
+        isSaving = true; const btn = document.getElementById('btn-edit-chal'); btn.innerText = "Ukládám..."; btn.disabled = true;
+        try { await updateDoc(doc(db, "challenges", selectedChallengeId), { name, targetKm, subtitle, visibility, challengeType, customMarkerType, customMarkerSvg, mapType, mapUrl, virtualMapUrl: vImg, virtualMapWidth: vW, virtualMapHeight: vH, virtualSvgPath: vSvg, virtualLineWidth: vLineWidth, virtualLineStyle: vLineStyle, virtualLineColor: vLineColor, bgUrl: finalBgUrl, badgeUrl: finalBadgeUrl, description: desc, rules: rules, authorDisplay: authorDisplay, start, end, startDay, allowedActivities }); window.closeEditChallengeModal(); } 
+        catch (e) { alert("Chyba."); console.error(e); } finally { isSaving = false; btn.innerText = "Uložit"; btn.disabled = false; }
+    }
+};
+window.deleteChallenge = async () => { if(selectedChallengeId && confirm("Smazat akci pro všechny?")) { await deleteDoc(doc(db, "challenges", selectedChallengeId)); window.closeEditChallengeModal(); } };
+
+window.switchTab = (tabId) => {
+  if (tabId !== 'map') window.lastOpenedChallengeId = null; 
+  window.scrollTo({ top: 0, behavior: 'instant' }); 
+  document.getElementById('tab-dashboard').classList.add('hidden'); document.getElementById('tab-statistics').classList.add('hidden'); document.getElementById('tab-profile').classList.add('hidden'); document.getElementById('tab-map').classList.add('hidden');
+  document.getElementById('nav-dashboard').classList.remove('active'); document.getElementById('nav-statistics').classList.remove('active'); document.getElementById('nav-profile').classList.remove('active'); document.getElementById('nav-map').classList.remove('active');
+  document.getElementById('tab-' + tabId).classList.remove('hidden'); document.getElementById('nav-' + tabId).classList.add('active');
+  if(tabId === 'map') { setTimeout(() => { if (leafletMap) leafletMap.invalidateSize(); if (currentSelectedChallengeIdForMap) window.handleMapSelect(currentSelectedChallengeIdForMap); }, 100); }
+};
+
+window.openPublicProfile = async (uid) => {
+    if(uid === currentUser?.uid) { window.switchTab('profile'); return; }
+    window.pushModalState();
+    document.getElementById('public-profile-modal').classList.add('active');
+
+    try {
+        const userSnap = await getDoc(doc(db, "users", uid));
+        if(userSnap.exists()) { 
+            const data = userSnap.data(); 
+            document.getElementById('public-profile-name').innerText = data.name; 
+            document.getElementById('public-profile-total-km').innerText = Math.max(0, data.personalKm || 0).toLocaleString('cs-CZ', {maximumFractionDigits: 1}) + ' km'; 
+            if(data.avatarUrl) { document.getElementById('public-profile-avatar').innerHTML = `<img src="${data.avatarUrl}">`; } 
+            else { document.getElementById('public-profile-avatar').innerText = data.name.charAt(0).toUpperCase(); }
+
+            const myData = globalUsersMap[currentUser.uid] || {};
+            let isFollowing = myData.following && myData.following.includes(uid);
+            let requestSent = myData.sentRequests && myData.sentRequests.includes(uid);
+
+            let btnHtml = '';
+            if (isFollowing) {
+                btnHtml = `<button class="btn-follow-active" onclick="unfollowUser('${uid}')">Zrušit sledování</button>`;
+            } else if (requestSent) {
+                btnHtml = `<button class="btn-follow-requested" onclick="cancelFollowRequest('${uid}')">Žádost odeslána (Zrušit)</button>`;
+            } else {
+                btnHtml = `<button class="btn-follow" onclick="requestFollow('${uid}')">Sledovat uživatele</button>`;
+            }
+            document.getElementById('public-profile-action-btn').innerHTML = btnHtml;
+
+            const actsSnap = await getDocs(query(collection(db, "activities"), where("uid", "==", uid), orderBy("timestamp", "desc")));
+            document.getElementById('public-profile-total-activities').innerText = actsSnap.size; 
+
+            const listContainer = document.getElementById('public-profile-activity-list'); 
+            listContainer.innerHTML = '';
+
+            let isTargetPrivate = data.isPrivate === true;
+
+            if (isTargetPrivate && !isFollowing && uid !== currentUser.uid) {
+                listContainer.innerHTML = `
+                    <div style="text-align: center; padding: 30px 20px; color: var(--text-gray);">
+                        <svg viewBox="0 0 24 24" width="36" height="36" fill="currentColor" style="margin-bottom:10px;"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6zm9 14H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg>
+                        <br><span style="font-weight:600; font-size:1.05em; color:var(--text-dark);">Tento účet je soukromý</span>
+                        <br><span style="font-size:0.85em;">Detailní aktivity jsou skryté.<br>Požádejte uživatele o sledování.</span>
+                    </div>`;
+            } else {
+                if(actsSnap.empty) { listContainer.innerHTML = "<div style='text-align: center; padding: 10px; color:var(--text-gray); font-size:0.9em;'>Žádné aktivity.</div>"; } 
+                else { 
+                    actsSnap.forEach(docSnap => { 
+                        const d = docSnap.data(); const dateObj = d.timestamp ? d.timestamp.toDate() : new Date(); const icon = icons[d.type] || icons["Chůze"]; 
+                        const stravaHtml = d.stravaUrl ? `<a href="${d.stravaUrl}" target="_blank" onclick="event.stopPropagation()" style="display:flex; align-items:center; margin-right: 10px;"><img src="strava.png" style="width:20px; height:20px; border-radius:4px;"></a>` : '';
+                        listContainer.innerHTML += `<div class="leaderboard-item">${icon}<div class="lb-name">${dateObj.toLocaleDateString('cs-CZ')} <span style="font-size: 0.8em; color: var(--text-gray); font-weight:400; margin-left: 5px;">(${d.type})</span></div>${stravaHtml}<div class="lb-score">${d.km.toLocaleString('cs-CZ', {maximumFractionDigits: 1})} km</div></div>`; 
+                    }); 
+                }
+            }
+        }
+    } catch (e) { }
+};
+
+window.closePublicProfile = () => window.handleUIClose('public-profile-modal');
+
+window.resetPassword = (event, inputId) => { 
+    event.preventDefault(); 
+    const email = document.getElementById(inputId).value.trim(); 
+    if(!email) { alert("Zadejte e-mail do políčka výše."); return; } 
+    sendPasswordResetEmail(auth, email).then(() => alert("E-mail pro obnovu hesla byl odeslán.")); 
+};
+
+window.registerUser = () => { 
+    const email = document.getElementById('reg-email').value.trim(); 
+    const password = document.getElementById('reg-password').value.trim();
+    const confirmPassword = document.getElementById('reg-password-confirm').value.trim();
+    const errorEl = document.getElementById('reg-error');
+    errorEl.style.display = 'none';
+
+    if (!window.validatePassword()) {
+        errorEl.innerText = "Heslo nesplňuje všechny požadované podmínky.";
+        errorEl.style.display = 'block';
+        return;
+    }
+    if (password !== confirmPassword) {
+        errorEl.innerText = "Zadaná hesla se neshodují.";
+        errorEl.style.display = 'block';
+        return;
+    }
+
+    createUserWithEmailAndPassword(auth, email, password).catch(error => {
+        errorEl.innerText = "Chyba registrace: " + error.message;
+        errorEl.style.display = 'block';
+    });
+};
+
+window.loginUser = () => { 
+    const email = document.getElementById('login-email').value.trim(); 
+    const password = document.getElementById('login-password').value.trim(); 
+    const errorEl = document.getElementById('login-error');
+    errorEl.style.display = 'none';
+
+    signInWithEmailAndPassword(auth, email, password).catch(error => {
+        errorEl.innerText = "Nesprávný e-mail nebo heslo.";
+        errorEl.style.display = 'block';
+    });
+};
+window.loginWithGoogle = () => { signInWithPopup(auth, googleProvider); };
+
+window.logoutUser = () => { 
+    document.getElementById('settings-modal').classList.remove('active');
+    signOut(auth); 
+};
+
+const modal = document.getElementById('activity-modal');
+window.openModal = () => { 
+    window.pushModalState();
+    modal.classList.add('active'); 
+    document.getElementById('km-input').value = ''; 
+    document.getElementById('calc-minutes').value = ''; 
+    document.getElementById('calc-speed').value = '4.5'; 
+    document.getElementById('calc-result').innerText = '0';
+    document.getElementById('strava-link-input').value = '';
+    
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    document.getElementById('activity-date-input').value = `${yyyy}-${mm}-${dd}`;
+
+    currentActivityType = "Chůze"; 
+    document.querySelectorAll('#activity-modal .chip').forEach(c => c.classList.remove('active')); 
+    document.querySelector('#activity-modal .chip[data-type="Chůze"]').classList.add('active'); 
+};
+window.closeModal = () => window.handleUIClose('activity-modal');
+window.selectChip = (element) => { document.querySelectorAll('#activity-modal .chip').forEach(c => c.classList.remove('active')); element.classList.add('active'); currentActivityType = element.getAttribute('data-type'); };
+
+window.toggleCalculator = () => {
+    const fields = document.getElementById('calc-fields'); const chevron = document.getElementById('calc-chevron');
+    if(fields.classList.contains('hidden')) { fields.classList.remove('hidden'); chevron.style.transform = 'rotate(-180deg)'; } 
+    else { fields.classList.add('hidden'); chevron.style.transform = 'rotate(0deg)'; }
+};
+
+window.setCalcPreset = (type, speed) => { document.getElementById('calc-speed').value = speed; window.calculateKm(); const chip = document.querySelector(`#activity-modal .chip[data-type="${type}"]`); if(chip) { window.selectChip(chip); } };
+window.calculateKm = () => { const mins = parseFloat(document.getElementById('calc-minutes').value) || 0; const speed = parseFloat(document.getElementById('calc-speed').value) || 0; const km = (mins / 60) * speed; document.getElementById('calc-result').innerText = km.toFixed(1); document.getElementById('km-input').value = km.toFixed(1); };
