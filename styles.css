@@ -245,3 +245,10 @@
 .btn-start:active { transform: scale(0.96); }
 .login-link { font-size: 0.9em; color: rgba(255,255,255,0.8); }
 .login-link span { color: white; font-weight: 700; cursor: pointer; }
+
+/* Oprava velikosti ikonek v přihlašovacích formulářích */
+.input-group svg {
+    width: 20px !important;
+    height: 20px !important;
+    min-width: 20px;
+}
