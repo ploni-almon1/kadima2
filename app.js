@@ -33,14 +33,23 @@ let personalFilterTo = '';
 
 let leafletMap = null; let mapLayers = []; let layerOsm = null; let layerSat = null; let currentMapLayerType = 'osm'; let currentSelectedChallengeIdForMap = null;
 
-window.showAuthForm = () => {
+// --- NAVIGACE ONBOARDINGU ---
+window.showLogin = () => {
     document.getElementById('onboarding-screen').classList.add('hidden');
-    document.getElementById('auth-screen').classList.remove('hidden');
+    document.getElementById('register-screen').classList.add('hidden');
+    document.getElementById('login-screen').classList.remove('hidden');
 };
-window.hideAuthForm = () => {
-    document.getElementById('auth-screen').classList.add('hidden');
+window.showRegister = () => {
+    document.getElementById('onboarding-screen').classList.add('hidden');
+    document.getElementById('login-screen').classList.add('hidden');
+    document.getElementById('register-screen').classList.remove('hidden');
+};
+window.goBackToStart = () => {
+    document.getElementById('login-screen').classList.add('hidden');
+    document.getElementById('register-screen').classList.add('hidden');
     document.getElementById('onboarding-screen').classList.remove('hidden');
 };
+window.hideAuthForm = window.goBackToStart;
 
 function getBearing(latlng1, latlng2) {
     if (!latlng1 || !latlng2) return 0;
@@ -252,128 +261,6 @@ if(yearSel) {
         yearSel.appendChild(o);
     }
 }
-
-onAuthStateChanged(auth, async (user) => {
-    // Skrytí fialového načítacího okna hned jak Firebase odpoví
-    const loader = document.getElementById('app-loader');
-    if (loader) {
-        loader.style.opacity = '0';
-        setTimeout(() => { loader.style.visibility = 'hidden'; }, 400);
-    }
-
-    if (user) {
-        currentUser = user; 
-        publicView.classList.add('hidden'); 
-        privateView.classList.remove('hidden');
-        isUserAdmin = user.email && ADMIN_EMAILS.map(e => e.toLowerCase()).includes(user.email.toLowerCase());
-
-        if (isUserAdmin) {
-            document.getElementById('btn-create-challenge-admin').style.display = 'block';
-            document.getElementById('admin-author-toggle').style.display = 'block';
-            document.getElementById('edit-admin-author-toggle').style.display = 'block';
-            document.getElementById('admin-visibility-toggle').style.display = 'block';
-            document.getElementById('edit-admin-visibility-toggle').style.display = 'block';
-        } else {
-            document.getElementById('btn-create-challenge-admin').style.display = 'block';
-            document.getElementById('admin-author-toggle').style.display = 'none';
-            document.getElementById('edit-admin-author-toggle').style.display = 'none';
-            document.getElementById('admin-visibility-toggle').style.display = 'none';
-            document.getElementById('edit-admin-visibility-toggle').style.display = 'none';
-        }
-
-        const userRef = doc(db, "users", user.uid);
-        if (!(await getDoc(userRef)).exists()) { 
-            await setDoc(userRef, { personalKm: 0, name: user.displayName || user.email.split('@')[0], avatarUrl: "", followers: [], following: [], followRequests: [], sentRequests: [], isPrivate: false, customStatsNote: "", userColor: "#FF5E00" }); 
-        }
-
-        unsubscribeUsersList = onSnapshot(collection(db, "users"), (snapshot) => {
-            globalUsersMap = {}; let rankArr = [];
-            snapshot.forEach(doc => { let data = doc.data(); globalUsersMap[doc.id] = data; rankArr.push({ id: doc.id, ...data }); });
-            rankArr.sort((a,b) => (b.personalKm || 0) - (a.personalKm || 0));
-            const dashList = document.getElementById('dashboard-leaderboard-list'); dashList.innerHTML = '';
-            for(let i=0; i<Math.min(3, rankArr.length); i++) {
-                let u = rankArr[i]; let avatarHtml = u.avatarUrl ? `<img src="${u.avatarUrl}">` : (u.name || 'N').charAt(0).toUpperCase();
-                dashList.innerHTML += `<div class="leaderboard-item" onclick="openPublicProfile('${u.id}')"><div class="lb-rank">${i+1}</div><div class="lb-avatar">${avatarHtml}</div><div class="lb-name">${u.name || 'Neznámý'}</div><div class="lb-score">${Math.max(0, u.personalKm || 0).toLocaleString('cs-CZ', {maximumFractionDigits: 1})} km</div></div>`;
-            }
-            renderDynamicContent();
-        });
-
-        unsubscribeUser = onSnapshot(userRef, (docSnap) => {
-          if (!docSnap.exists()) return; const data = docSnap.data(); const myKm = Math.max(0, data.personalKm || 0); 
-          let formattedStr = myKm.toLocaleString('cs-CZ', {maximumFractionDigits: 1});
-          document.getElementById('my-km-text').innerHTML = `${formattedStr}<span> km</span>`;
-          document.getElementById('profile-name').innerText = data.name || 'Neznámý';
-          document.getElementById('profile-total-km').innerText = formattedStr + ' km';
-          const pAvatarNode = document.getElementById('profile-avatar');
-          if (data.avatarUrl) { pAvatarNode.innerHTML = `<img src="${data.avatarUrl}">`; } else { pAvatarNode.innerHTML = (data.name || 'N').charAt(0).toUpperCase(); }
-
-          if (data.customStatsNote) {
-              document.getElementById('p-custom-note').value = data.customStatsNote;
-          } else {
-              document.getElementById('p-custom-note').value = "";
-          }
-
-          let followersCount = data.followers ? data.followers.length : 0;
-          let followingCount = data.following ? data.following.length : 0;
-          let requestsCount = data.followRequests ? data.followRequests.length : 0;
-
-          document.getElementById('profile-followers').innerText = followersCount;
-          document.getElementById('profile-following').innerText = followingCount;
-
-          const reqBtn = document.getElementById('profile-requests-btn');
-          if(requestsCount > 0) { reqBtn.style.display = 'block'; reqBtn.innerText = `Nové žádosti o sledování (${requestsCount})`; } 
-          else { reqBtn.style.display = 'none'; }
-        });
-
-        unsubscribeActivities = onSnapshot(query(collection(db, "activities"), where("uid", "==", user.uid), orderBy("timestamp", "desc")), (snapshot) => {
-           const listContainer = document.getElementById('profile-activity-list'); listContainer.innerHTML = '';
-           document.getElementById('profile-total-activities').innerText = snapshot.size;
-           let todayKm = 0; const todayStr = new Date().toLocaleDateString('cs-CZ');
-           if(snapshot.empty) { listContainer.innerHTML = '<div style="text-align: center; color: var(--text-gray); padding: 10px; font-size:0.9em;">Zatím nemáš zapsanou žádnou aktivitu.</div>'; }
-           else {
-               snapshot.forEach(docSnap => {
-                   const data = docSnap.data(); const dateObj = data.timestamp ? data.timestamp.toDate() : new Date();
-                   if (dateObj.toLocaleDateString('cs-CZ') === todayStr) { todayKm += data.km; }
-
-                   const stravaHtml = data.stravaUrl ? `<a href="${data.stravaUrl}" target="_blank" onclick="event.stopPropagation()" style="display:flex; align-items:center; margin-right: 10px;"><img src="strava.png" style="width:20px; height:20px; border-radius:4px;"></a>` : '';
-
-                   const item = document.createElement('div'); item.className = 'leaderboard-item';
-                   item.innerHTML = `${icons[data.type] || icons["Chůze"]}<div class="lb-name">${dateObj.toLocaleDateString('cs-CZ')} <span style="font-size: 0.8em; color: var(--text-gray); margin-left: 5px; font-weight:400;">(${data.type})</span></div>${stravaHtml}<div class="lb-score">${data.km.toLocaleString('cs-CZ', {maximumFractionDigits: 1})} km</div><button class="btn-inline-edit" onclick="openEditModal('${docSnap.id}', ${data.km}, '${data.type}', '${dateObj.toISOString().split('T')[0]}', '${data.stravaUrl || ''}')"><svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></button>`;
-                   listContainer.appendChild(item);
-               });
-           }
-           const badge = document.getElementById('daily-progress-badge');
-           if (todayKm > 0) { badge.className = 'badge-green active'; badge.innerHTML = `<svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/></svg> +${todayKm.toLocaleString('cs-CZ', {maximumFractionDigits: 1})} km`; } 
-           else { badge.className = 'badge-green inactive'; badge.innerHTML = `0 km dnes`; }
-        });
-
-        unsubscribeAllActivities = onSnapshot(collection(db, "activities"), (snapshot) => {
-            globalActivities = []; snapshot.forEach(docSnap => { globalActivities.push({ id: docSnap.id, ...docSnap.data() }); }); renderDynamicContent();
-        });
-
-        unsubscribeChallengesList = onSnapshot(query(collection(db, "challenges"), orderBy("createdAt", "desc")), async (snap) => {
-            globalChallenges = []; snap.forEach(docSnap => { globalChallenges.push({ id: docSnap.id, ...docSnap.data() }); }); renderDynamicContent();
-        });
-
-    } else {
-        currentUser = null; isUserAdmin = false; 
-        publicView.classList.remove('hidden'); 
-        privateView.classList.add('hidden');
-        window.hideAuthForm();
-        
-        if(unsubscribeUser) unsubscribeUser(); if(unsubscribeUsersList) unsubscribeUsersList(); if(unsubscribeActivities) unsubscribeActivities(); if(unsubscribeChallengesList) unsubscribeChallengesList(); if(unsubscribeAllActivities) unsubscribeAllActivities();
-    }
-
-    if (!hasCheckedSharedLink) {
-        hasCheckedSharedLink = true;
-        const urlParams = new URLSearchParams(window.location.search);
-        const sharedChallengeId = urlParams.get('challenge');
-        if (sharedChallengeId) {
-            window.openChallengeDetail(sharedChallengeId);
-            window.history.replaceState({}, document.title, window.location.pathname);
-        }
-    }
-});
 
 window.setPersonalFilter = (type) => {
     personalFilterType = type;
@@ -1891,13 +1778,26 @@ window.openPublicProfile = async (uid) => {
 
 window.closePublicProfile = () => window.handleUIClose('public-profile-modal');
 
-window.resetPassword = (event) => { event.preventDefault(); const email = document.getElementById('email-input').value.trim(); if(!email) return; sendPasswordResetEmail(auth, email); };
+// --- PŘIHLÁŠOVACÍ/REGISTRAČNÍ FUNKCE ---
+window.resetPassword = (event) => { 
+    event.preventDefault(); 
+    const email = document.getElementById('login-email').value.trim(); 
+    if(!email) { alert("Zadejte prosím svůj e-mail do přihlašovacího pole pro obnovu."); return; }
+    sendPasswordResetEmail(auth, email); 
+};
 
 window.registerUser = () => { 
-    const email = document.getElementById('email-input').value.trim(); 
-    const password = document.getElementById('password-input').value.trim();
-    const errorEl = document.getElementById('auth-error');
+    const email = document.getElementById('register-email').value.trim(); 
+    const password = document.getElementById('register-password').value.trim();
+    const passwordConfirm = document.getElementById('register-password-confirm').value.trim();
+    const errorEl = document.getElementById('register-error');
     errorEl.style.display = 'none';
+
+    if (password !== passwordConfirm) {
+        errorEl.innerText = "Zadaná hesla se neshodují.";
+        errorEl.style.display = 'block';
+        return;
+    }
 
     createUserWithEmailAndPassword(auth, email, password).catch(error => {
         errorEl.innerText = "Chyba registrace: " + error.message;
@@ -1906,9 +1806,9 @@ window.registerUser = () => {
 };
 
 window.loginUser = () => { 
-    const email = document.getElementById('email-input').value.trim(); 
-    const password = document.getElementById('password-input').value.trim(); 
-    const errorEl = document.getElementById('auth-error');
+    const email = document.getElementById('login-email').value.trim(); 
+    const password = document.getElementById('login-password').value.trim(); 
+    const errorEl = document.getElementById('login-error');
     errorEl.style.display = 'none';
 
     signInWithEmailAndPassword(auth, email, password).catch(error => {
@@ -1916,6 +1816,7 @@ window.loginUser = () => {
         errorEl.style.display = 'block';
     });
 };
+
 window.loginWithGoogle = () => { signInWithPopup(auth, googleProvider); };
 
 window.logoutUser = () => { 
@@ -1956,7 +1857,6 @@ window.setCalcPreset = (type, speed) => { document.getElementById('calc-speed').
 window.calculateKm = () => { const mins = parseFloat(document.getElementById('calc-minutes').value) || 0; const speed = parseFloat(document.getElementById('calc-speed').value) || 0; const km = (mins / 60) * speed; document.getElementById('calc-result').innerText = km.toFixed(1); document.getElementById('km-input').value = km.toFixed(1); };
 
 onAuthStateChanged(auth, async (user) => {
-    // Skrytí fialového načítacího okna hned jak Firebase odpoví
     const loader = document.getElementById('app-loader');
     if (loader) {
         loader.style.opacity = '0';
