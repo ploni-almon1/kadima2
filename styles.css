@@ -230,7 +230,7 @@
 .spinner { border: 4px solid rgba(255,255,255,0.2); border-top-color: #ffffff; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-.onboarding-container { background: #5A52E5; background-image: radial-gradient(circle at 10% 20%, rgba(255,255,255,0.05) 0%, transparent 40%), radial-gradient(circle at 90% 80%, rgba(255,255,255,0.05) 0%, transparent 40%); min-height: 100vh; display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: 60px 30px 40px 30px; color: white; text-align: center; }
+.onboarding-container { background: #4E46E5; background-image: radial-gradient(circle at 10% 20%, rgba(255,255,255,0.05) 0%, transparent 40%), radial-gradient(circle at 90% 80%, rgba(255,255,255,0.05) 0%, transparent 40%); min-height: 100vh; display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: 60px 30px 40px 30px; color: white; text-align: center; }
 .onboarding-content { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; margin-bottom: 20px; }
 .onboarding-logo { margin-bottom: 20px; }
 .onboarding-logo svg { color: white; }
