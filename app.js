@@ -35,16 +35,19 @@ let leafletMap = null; let mapLayers = []; let layerOsm = null; let layerSat = n
 
 // --- NAVIGACE ONBOARDINGU ---
 window.showLogin = () => {
+    document.getElementById('theme-color-meta').setAttribute('content', '#ffffff');
     document.getElementById('onboarding-screen').classList.add('hidden');
     document.getElementById('register-screen').classList.add('hidden');
     document.getElementById('login-screen').classList.remove('hidden');
 };
 window.showRegister = () => {
+    document.getElementById('theme-color-meta').setAttribute('content', '#ffffff');
     document.getElementById('onboarding-screen').classList.add('hidden');
     document.getElementById('login-screen').classList.add('hidden');
     document.getElementById('register-screen').classList.remove('hidden');
 };
 window.goBackToStart = () => {
+    document.getElementById('theme-color-meta').setAttribute('content', '#4E46E5');
     document.getElementById('login-screen').classList.add('hidden');
     document.getElementById('register-screen').classList.add('hidden');
     document.getElementById('onboarding-screen').classList.remove('hidden');
@@ -1864,6 +1867,8 @@ onAuthStateChanged(auth, async (user) => {
     }
 
     if (user) {
+        document.getElementById('theme-color-meta').setAttribute('content', '#F0F2F5');
+        
         currentUser = user; 
         publicView.classList.add('hidden'); 
         privateView.classList.remove('hidden');
@@ -1958,6 +1963,8 @@ onAuthStateChanged(auth, async (user) => {
         });
 
     } else {
+        document.getElementById('theme-color-meta').setAttribute('content', '#4E46E5');
+        
         currentUser = null; isUserAdmin = false; 
         publicView.classList.remove('hidden'); 
         privateView.classList.add('hidden');
