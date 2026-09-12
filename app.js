@@ -33,6 +33,41 @@ let personalFilterTo = '';
 
 let leafletMap = null; let mapLayers = []; let layerOsm = null; let layerSat = null; let currentMapLayerType = 'osm'; let currentSelectedChallengeIdForMap = null;
 
+// --- PWA INSTALACE ---
+let deferredPrompt;
+const installBanner = document.getElementById('pwa-install-banner');
+const manualInstallBtn = document.getElementById('btn-manual-install');
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    
+    if (manualInstallBtn) manualInstallBtn.style.display = 'block';
+    
+    const dismissedTime = localStorage.getItem('pwa-dismissed-time');
+    const now = Date.now();
+    const waitTime = 24 * 60 * 60 * 1000; 
+
+    if (!dismissedTime || (now - parseInt(dismissedTime)) > waitTime) {
+        installBanner.classList.remove('hidden');
+    }
+});
+
+window.installPWA = async () => {
+    installBanner.classList.add('hidden'); 
+    if (deferredPrompt) {
+        deferredPrompt.prompt(); 
+        await deferredPrompt.userChoice; 
+        deferredPrompt = null;
+        if (manualInstallBtn) manualInstallBtn.style.display = 'none'; 
+    }
+};
+
+window.dismissPWAInstall = () => {
+    installBanner.classList.add('hidden');
+    localStorage.setItem('pwa-dismissed-time', Date.now().toString()); 
+};
+
 // --- NAVIGACE ONBOARDINGU ---
 window.showLogin = () => {
     document.getElementById('theme-color-meta').setAttribute('content', '#ffffff');
@@ -53,6 +88,12 @@ window.goBackToStart = () => {
     document.getElementById('onboarding-screen').classList.remove('hidden');
 };
 window.hideAuthForm = window.goBackToStart;
+
+window.openTermsModal = () => {
+    window.pushModalState();
+    document.getElementById('terms-modal').classList.add('active');
+};
+window.closeTermsModal = () => window.handleUIClose('terms-modal');
 
 function getBearing(latlng1, latlng2) {
     if (!latlng1 || !latlng2) return 0;
@@ -1793,8 +1834,15 @@ window.registerUser = () => {
     const email = document.getElementById('register-email').value.trim(); 
     const password = document.getElementById('register-password').value.trim();
     const passwordConfirm = document.getElementById('register-password-confirm').value.trim();
+    const termsChecked = document.getElementById('register-terms').checked;
     const errorEl = document.getElementById('register-error');
     errorEl.style.display = 'none';
+
+    if (!termsChecked) {
+        errorEl.innerText = "Musíte souhlasit se zpracováním údajů a podmínkami.";
+        errorEl.style.display = 'block';
+        return;
+    }
 
     if (password !== passwordConfirm) {
         errorEl.innerText = "Zadaná hesla se neshodují.";
