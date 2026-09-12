@@ -22,6 +22,17 @@
 </head>
 <body>
 
+  <!-- PWA INSTALAČNÍ BANNER -->
+  <div id="pwa-install-banner" class="hidden" style="position: fixed; top: 15px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 400px; background: var(--white); border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); z-index: 10000; display: flex; align-items: center; padding: 12px 15px; gap: 15px;">
+      <img src="icon.png" alt="Kadima" style="width: 40px; height: 40px; border-radius: 10px;">
+      <div style="flex: 1; text-align: left;">
+          <div style="font-weight: 700; font-size: 0.95em; color: var(--text-dark);">Nainstalovat Kadima</div>
+          <div style="font-size: 0.8em; color: var(--text-gray);">Rychlejší přístup z plochy</div>
+      </div>
+      <button onclick="installPWA()" style="background: transparent; color: var(--primary-dark); border: none; font-weight: 700; font-size: 0.9em; cursor: pointer;">Instalovat</button>
+      <button onclick="dismissPWAInstall()" style="background: transparent; border: none; color: var(--text-gray); font-size: 1.2em; cursor: pointer; padding: 0 5px;">✕</button>
+  </div>
+
   <!-- NAČÍTACÍ OBRAZOVKA -->
   <div id="app-loader">
       <div class="spinner"></div>
@@ -66,7 +77,7 @@
 
         <a href="#" style="display:block; text-align:right; font-size:0.85em; font-weight:600; color:var(--primary-dark); margin-bottom:20px; text-decoration:none;" onclick="resetPassword(event)">Zapomenuté heslo?</a>
 
-        <button onclick="loginUser()" class="btn-login" style="background:#5A52E5;">Přihlásit se</button>
+        <button onclick="loginUser()" class="btn-login" style="background:#4E46E5;">Přihlásit se</button>
         
         <div style="display:flex; align-items:center; color:var(--text-gray); font-size:0.85em; margin: 20px 0;">
             <div style="flex:1; height:1px; background:var(--gray-border);"></div><span style="padding:0 10px;">nebo</span><div style="flex:1; height:1px; background:var(--gray-border);"></div>
@@ -106,7 +117,14 @@
           </div>
         </div>
 
-        <button onclick="registerUser()" class="btn-login" style="background:#5A52E5;">Vytvořit účet</button>
+        <div style="display:flex; align-items:flex-start; gap:10px; margin-bottom: 20px;">
+          <input type="checkbox" id="register-terms" style="margin-top: 3px; width: 16px; height: 16px; cursor: pointer;">
+          <label for="register-terms" style="font-size: 0.8em; color: var(--text-gray); line-height: 1.4; cursor: pointer;">
+            Souhlasím se <span onclick="openTermsModal()" style="color: var(--primary-dark); font-weight: 700; text-decoration: underline;">zpracováním údajů a podmínkami</span>.
+          </label>
+        </div>
+
+        <button onclick="registerUser()" class="btn-login" style="background:#4E46E5;">Vytvořit účet</button>
         
         <div style="display:flex; align-items:center; color:var(--text-gray); font-size:0.85em; margin: 20px 0;">
             <div style="flex:1; height:1px; background:var(--gray-border);"></div><span style="padding:0 10px;">nebo</span><div style="flex:1; height:1px; background:var(--gray-border);"></div>
@@ -402,6 +420,10 @@
             <button class="btn-cancel" onclick="closeSettingsModal()">Zavřít</button>
             <button class="btn-save" onclick="saveSettings()">Uložit</button>
         </div>
+        
+        <!-- TRVALÉ TLAČÍTKO PRO INSTALACI PWA -->
+        <button id="btn-manual-install" class="btn-save" style="margin-top:15px; width:100%; display:none; background-color: var(--primary-dark);" onclick="installPWA()">Nainstalovat aplikaci do telefonu</button>
+        
         <button class="btn-delete" style="margin-top:15px;" onclick="logoutUser()">Odhlásit z aplikace</button>
     </div>
   </div>
@@ -910,6 +932,30 @@
               <div style="text-align:left; font-weight:700; font-size:1.05em; margin-bottom:10px; margin-top:10px;">Přehled aktivit</div>
               <div id="public-profile-activity-list" class="leaderboard-list"></div>
           </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="terms-modal" class="modal-overlay" onclick="if(event.target===this) closeTermsModal()">
+    <div class="modal-content" style="max-width: 500px; text-align: left;">
+      <h3 style="margin-bottom:15px; text-align: center;">Ochrana soukromí a podmínky</h3>
+      <div style="font-size: 0.85em; color: var(--text-dark); line-height: 1.6; max-height: 50vh; overflow-y: auto; padding-right: 10px;">
+          <p>Tato aplikace je vytvořena pro komunitní a osobní účely. Aby vše správně fungovalo, potřebujeme zpracovávat několik základních údajů.</p>
+          <br>
+          <p><strong>1. Jaká data sbíráme</strong><br>
+          Ukládáme tvůj e-mail (slouží pouze pro bezpečné přihlášení), jméno nebo přezdívku, profilovou fotku a záznamy o tvých aktivitách (kilometry, typ sportu, datum, poznámky a případné odkazy na Stravu).</p>
+          <br>
+          <p><strong>2. K čemu data slouží</strong><br>
+          Data využíváme výhradně k chodu aplikace – pro výpočet tvých osobních statistik, tvůj posun v mapách a pro sestavování žebříčků v závodech a výzvách.</p>
+          <br>
+          <p><strong>3. Kdo tvoje data vidí</strong><br>
+          Tvé statistiky mohou vidět uživatelé, se kterými sdílíš společnou výzvu, nebo tví sledující. Data nikdy neprodáváme ani neposkytujeme žádným třetím stranám pro reklamní účely. Vše je bezpečně uloženo na serverech Google Firebase.</p>
+          <br>
+          <p><strong>4. Tvoje práva a smazání dat</strong><br>
+          Máš nad svými daty plnou kontrolu. V nastavení profilu můžeš kdykoliv využít tlačítko „Odstranit celý můj profil“. Tím se z databáze nevratně smažou veškeré tvé záznamy, kilometry i přihlašovací e-mail.</p>
+      </div>
+      <div class="modal-buttons-row">
+          <button class="btn-cancel" onclick="closeTermsModal()" style="width: 100%;">Rozumím a zavřít</button>
       </div>
     </div>
   </div>
